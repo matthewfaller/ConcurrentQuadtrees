@@ -16,23 +16,23 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
+/**
+ * @author Matthew Faller
+ * A simple swing class to visualize the changes to a quadtree. 
+ */
 public class Visualizer extends JFrame {
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
 	
+	private static final long serialVersionUID = 1L;	
 	static int POINT_RADIUS = 14;
 	static int WIDTH = 800, HEIGHT = 800;
 	private static JPanel contentPane;
-	private static QTree root;
+	private static QuadtreeConcurrent root;
 	private static URL url;
 	private static Image img;
 	
 	public Visualizer(){
 		WIDTH = getToolkit().getScreenSize().height - 100; HEIGHT = WIDTH;
-		root = new QTree(new Box(new Vec2f(WIDTH/2, HEIGHT/2), WIDTH, HEIGHT), true, null);
+		root = new QuadtreeConcurrent(new Box(new Vec2f(WIDTH/2, HEIGHT/2), WIDTH, HEIGHT), true, null);
 		url = getClass().getResource("flower.png");
 		BufferedImage image = null;
 		try {
@@ -42,21 +42,22 @@ public class Visualizer extends JFrame {
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		}
-		
+		}		
 		contentPane = new JPanel();
 		contentPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		contentPane.setLayout(null);
 		contentPane.addMouseListener(new MouseListener(){//Anonymous Inner Type
-
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				
-				root.insert( new Vec2f( e.getPoint().x, e.getPoint().y) );
+				root.insert( new Float2( e.getPoint().x, e.getPoint().y) );
 				redrawTree(root);
 			}
 			@Override
-			public void mousePressed(MouseEvent e) {}
+			public void mousePressed(MouseEvent e) {
+
+				
+			}
 			@Override
 			public void mouseReleased(MouseEvent e) {}
 			@Override
@@ -80,11 +81,11 @@ public class Visualizer extends JFrame {
 		vis.setVisible(true);
 	}
 	
-	private static void redrawTree(QTree tree){
+	private static void redrawTree(QuadtreeConcurrent tree){
 		
 		contentPane.removeAll();
 		ArrayList<Box> boxes = tree.getBoxes();
-		ArrayList<Vec2f> points = tree.getPoints();
+		ArrayList<Float2> points = tree.getPoints(new ArrayList<Float2>());
 		
 		for(Box b : boxes){
 			
@@ -92,12 +93,9 @@ public class Visualizer extends JFrame {
 			label.setBounds((int)(b.pos.x - b.halfWidth()), (int)(b.pos.y - b.halfHeight()), (int)b.getHeight(), (int)b.getHeight());
 			label.setBorder(new LineBorder(Color.BLACK, 1));
 			contentPane.add(label);
-		}
-		
-		for(Vec2f point : points){
-			
-			//icon.getImage().getScaledInstance(POINT_RADIUS, height, hints)
-			
+		}		
+		for(Vec2f point : points){			
+			//icon.getImage().getScaledInstance(POINT_RADIUS, height, hints)			
 			ImageComponent label = new ImageComponent(img);			
 			label.setBounds((int)point.x - POINT_RADIUS/2, (int)point.y - POINT_RADIUS/2, POINT_RADIUS, POINT_RADIUS);
 			//label.setBackground(Color.RED);
@@ -114,22 +112,16 @@ public class Visualizer extends JFrame {
 				@Override
 				public void mouseClicked(MouseEvent e) {
 					
-					boolean deleted = root.delete(new Vec2f(e.getComponent().getBounds().x + POINT_RADIUS/2,
-										  e.getComponent().getBounds().y + POINT_RADIUS/2));
-					
-					
+					boolean deleted = root.delete(new Float2(e.getComponent().getBounds().x + POINT_RADIUS/2,
+										  e.getComponent().getBounds().y + POINT_RADIUS/2));					
 					if(deleted){
 						redrawTree(root);
-					}
-						
-					System.out.println(e.getComponent().getBounds().getLocation());
+					}						
+					//System.out.println("Tree Size : " + root.count());
 				}
 			});
 			contentPane.add(label);
-		}
-		
-		
+		}		
 		contentPane.repaint();
 	}
-
 }

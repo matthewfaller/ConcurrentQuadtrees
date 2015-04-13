@@ -1,5 +1,9 @@
 package com.matthewfaller.concurrent;
 
+/**
+ * This class performs a number of useful mathmatical operations. 
+ * @author Matthew Faller
+ * */
 public abstract class Vmath {
 	
 	private final static byte TR = 0;

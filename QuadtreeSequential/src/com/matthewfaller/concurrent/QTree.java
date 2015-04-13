@@ -2,6 +2,8 @@ package com.matthewfaller.concurrent;
 
 import java.util.ArrayList;
 
+import javax.sql.rowset.spi.SyncResolver;
+
 public class QTree {
 	
 	private static final int SPLIT = 1;
@@ -23,33 +25,34 @@ public class QTree {
 	
 	public boolean insert(Vec2f point){
 		boolean result = false;
-				
-		if(isLeaf){
+		
+		if(!box.containsPoint(point))
+			return false;
 			
-			if(box.containsPoint(point)){
+		if(isLeaf){		
+			
+			for(int i = 0; i < numEntries; i++){
 				
-				for(int i = 0; i < numEntries; i++){
-					
-					if(content[i].equals(point)){
-						pointCount[i]++;
-						totalCount++;
-						result = true;
-						break;
-					}
+				if(content[i].equals(point)){
+					pointCount[i]++;
+					totalCount++;
+					result = true;
+					break;
 				}
-				if(!result){
+			}
+			if(!result){
+				
+				if(numEntries < SPLIT){
 					
-					if(numEntries < SPLIT){
 						content[numEntries] = point;
 						pointCount[numEntries++] += 1;
-						totalCount++;
-					}else{				
-						split();
-						insert(point);
-					}
+						totalCount++;						
+				}else{				
+					split();
+					insert(point);
 				}
-				result = true;	
 			}
+			result = true;		
 		}
 		else{			
 			for(QTree child : children)
@@ -61,32 +64,51 @@ public class QTree {
 	public boolean delete(Vec2f point){
 		boolean result = false;
 		
-		if(isLeaf){
-			
-			if(box.containsPoint(point)){
+		if(!box.containsPoint(point))
+			return false;
+		
+		if(isLeaf){			
 				
-				for(int i = 0; i < numEntries; i++){
+			for(int i = 0; i < numEntries; i++){
+				
+				if(content[i].equals(point)){
 					
-					if(content[i].equals(point)){
-						
-						pointCount[i]--;
-						totalCount--;
-						
-						if(pointCount[i] == 0)
-							numEntries--;
-						
-						merge();
-						result = true;
-						break;
-					}
+					pointCount[i]--;
+					totalCount--;
+					
+					if(pointCount[i] == 0)
+						numEntries--;
+					
+					merge();
+					result = true;
+					break;
 				}
-			}
+			}		
 		}else{
 			
 			for(QTree child : children)
 				result |= child.delete(point);
 		}
 		
+		return result;
+	}
+	
+	public ArrayList<Vec2f> queryRange(Box searchSpace){
+		
+		ArrayList<Vec2f> result = new ArrayList<Vec2f>();
+		
+		if(isLeaf){
+			
+			for(int i = 0; i < numEntries; i++)				
+				if(searchSpace.containsPoint(content[i]))					
+					for(int j = 0; j < pointCount[i]; j++)
+						result.add(new Vec2f(content[i].x, content[i].y));			
+		}else{
+			
+			for(QTree child : children)
+				if(child.box.intersects(searchSpace))
+					result.addAll(child.queryRange(searchSpace));
+		}
 		return result;
 	}
 	
@@ -119,7 +141,8 @@ public class QTree {
 		
 		return result;
 	}
-	private void split(){
+	private void split(){	
+		
 		isLeaf = false;
 		float halfWidth = box.getWidth()/4, halfHeight = box.getHeight()/4;
 		float width = box.getWidth()/2, height = box.getHeight()/2;

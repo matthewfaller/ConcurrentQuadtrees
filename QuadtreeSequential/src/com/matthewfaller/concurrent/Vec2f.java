@@ -1,6 +1,7 @@
 package com.matthewfaller.concurrent;
 /**
  * This is the class the is used to represent things such as locations, forces, etc...
+ * @author Matthew Faller
  * */
 public class Vec2f {
 	public float x;
